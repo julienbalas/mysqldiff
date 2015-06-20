@@ -4,10 +4,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Schema {
-
     public String fileName;
     public Set<TableKV> tables = new HashSet<TableKV>();
-    public Set<TableKV> contraintes = new HashSet<TableKV>();
+    public Set<TableKV> constraints = new HashSet<TableKV>();
 
     public TableKV getTable(String name) {
         for (TableKV cur : tables) {
@@ -19,7 +18,7 @@ public class Schema {
     }
 
     public TableKV getContrainte(String name) {
-        for (TableKV cur : contraintes) {
+        for (TableKV cur : constraints) {
             if (cur.name.equals(name)) {
                 return cur;
             }
