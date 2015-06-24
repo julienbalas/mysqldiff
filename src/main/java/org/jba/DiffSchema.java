@@ -1,7 +1,5 @@
 package org.jba;
 
-
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
@@ -17,11 +15,11 @@ import org.jba.model.TableKV;
  */
 public class DiffSchema {
 
-    private static final String REP = "/home/julien/dev/mysqldiff2/data/";
-    private static final String FIC_A = "2015_06_19_vet1_gmvet.sql";
-    private static final String NAME_A = "vet1";
-    private static final String NAME_B = "vet2";
-    private static final String FIC_B = "2015_06_19_vet2_gmvet.sql";
+    private static final String REP = "/home/julien/dev/mysqldiff/data/";
+    private static final String FIC_A = "firstFile.sql";
+    private static final String NAME_A = "my first platform";
+    private static final String NAME_B = "my second platform";
+    private static final String FIC_B = "Secondfile.sql";
 
     private static Schema buildSchema(String fileName) throws Exception {
 		BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(REP + fileName)));
