@@ -22,7 +22,7 @@ public class DiffSchema {
     private static final String FIC_B = "Secondfile.sql";
 
     private static Schema buildSchema(String fileName) throws Exception {
-		BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(REP + fileName)));
+	BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(REP + fileName)));
         Schema sch = new Schema();
         sch.fileName = fileName;
 
@@ -38,7 +38,7 @@ public class DiffSchema {
                     inCreate = true;
                     table = new TableKV(extractName(line));
                 }
-                if (inCreate && line.startsWith(" ")) { // we are on a colomn or key line
+                if (inCreate && line.startsWith(" ")) { // we are on a column or key line
                     table.lines.add(clean(line));
                 }
                 if (inCreate && line.startsWith(") ENGINE=")) { // Table creation block end
@@ -74,7 +74,7 @@ public class DiffSchema {
     }
 
     public static void main(String[] args) throws Exception {
-		System.out.println("-- mysqlDiff start");
+	System.out.println("-- mysqlDiff start");
         long deb = System.currentTimeMillis();
 
         Schema schemaA = buildSchema(FIC_A);
@@ -82,17 +82,15 @@ public class DiffSchema {
         System.out.println(NAME_A + " = " + FIC_A);
         System.out.println(NAME_B + " = " + FIC_B);
 
-        // maintenant qu'on a les deux schema en RAM, on vas les comparer
-        // on le fait en X passes, même si ca n'est pas forcement le plus efficace, comme ca on peut grouper le type de modifs
-        // d'abord l'absence ou la presence des tables elles même
+        // the 2 schema are loaded, we can start the real work
         for (String tableName : getAllTables(schemaA, schemaB)) {
             TableKV tableA = schemaA.getTable(tableName);
             TableKV tableB = schemaB.getTable(tableName);
 
             if (tableA.equals(TableKV.NOT_FOUND)) {
-                System.out.println("-- La table " + tableName + " existe dans " + NAME_B + " mais pas dans " + NAME_A + ".");
+                System.out.println("-- Table " + tableName + " exists in " + NAME_B + " but not in " + NAME_A + ".");
             } else if (tableB.equals(TableKV.NOT_FOUND)) {
-                System.out.println("-- La table " + tableName + " existe dans " + NAME_A + " mais pas dans " + NAME_B + ".");
+                System.out.println("-- Table " + tableName + " exists in " + NAME_A + " but not in " + NAME_B + ".");
             }
         }
         
@@ -107,18 +105,17 @@ public class DiffSchema {
        
 
         long fin = System.currentTimeMillis();
-		System.out.println("-- mysqlDiff end : duration = " + displayDuration(deb, fin));
+	System.out.println("-- mysqlDiff end : duration = " + displayDuration(deb, fin));
     }
 
     private static void printColDiff(Schema firstSchema, String firstName, Schema secondSchema, String secondName) {
-        System.out.println("-- Les colonnes de " + firstName + " qui n'existent pas dans " + secondName + ".");
+        System.out.println("-- Columns from " + firstName + " who don't exists in " + secondName + ".");
         for (String tableName : getAllTables(firstSchema, secondSchema)) {
             TableKV tableFirst = firstSchema.getTable(tableName);
             TableKV tableSecond = secondSchema.getTable(tableName);
 
             if (!tableFirst.equals(TableKV.NOT_FOUND) && !tableSecond.equals(TableKV.NOT_FOUND)) {
-                // elle est des deux cotés
-                // on regarde si on a les même colonnes
+                // table is on both side, check the columns 
                 for (String ligneA : tableFirst.lines) {
                     if (!tableSecond.lines.contains(ligneA)) {
                         if (!ligneA.contains(" KEY `")) {
@@ -132,14 +129,13 @@ public class DiffSchema {
     }
 
     private static void printIndexDiff(Schema firstSchema, String firstName, Schema secondSchema, String secondName) {
-        System.out.println("-- Les index de " + firstName + " qui n'existent pas dans " + secondName + ".");
+        System.out.println("-- Indexs from " + firstName + " who don't exists in " + secondName + ".");
         for (String tableName : getAllTables(firstSchema, secondSchema)) {
             TableKV tableFirst = firstSchema.getTable(tableName);
             TableKV tableSecond = secondSchema.getTable(tableName);
 
             if (!tableFirst.equals(TableKV.NOT_FOUND) && !tableSecond.equals(TableKV.NOT_FOUND)) {
-                // elle est des deux cotés
-                // on regarde si on a les même colonnes
+                // table is on both side, check the index
                 for (String ligneA : tableFirst.lines) {
                     if (!tableSecond.lines.contains(ligneA)) {
                         if (ligneA.contains(" KEY `")) {
@@ -153,15 +149,13 @@ public class DiffSchema {
     }
 
     private static void printContrainteDiff(Schema firstSchema, String firstName, Schema secondSchema, String secondName) {
-        System.out.println("-- Les Foreign Key de " + firstName + " qui n'existent pas dans " + secondName + ".");
+        System.out.println("-- Foreign Key from " + firstName + " who don't exists in " + secondName + ".");
         for (String tableName : getAllConstraints(firstSchema, secondSchema)) {
             TableKV tableFirst = firstSchema.getContrainte(tableName);
             TableKV tableSecond = secondSchema.getContrainte(tableName);
             if (!tableFirst.equals(TableKV.NOT_FOUND) && !tableSecond.equals(TableKV.NOT_FOUND)) {
-                // elle est des deux cotés
-                // on regarde si on a les même colonnes
+                // Table is on both side, check the FK
                 for (String ligneA : tableFirst.lines) {
-
                     if (!tableSecond.lines.contains(ligneA)) {
                         System.out.println("ALTER TABLE " + tableFirst.name + ligneA + ";");
                     }
