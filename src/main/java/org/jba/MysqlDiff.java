@@ -223,7 +223,7 @@ public class MysqlDiff {
     }
 
     private static void print(String string) {
-        System.out.println(string.replaceAll("( )*", " "));
+        System.out.println(string.replace("   ", " ").replace("  ", " "));
 
     }
 
