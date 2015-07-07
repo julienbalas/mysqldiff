@@ -1,6 +1,7 @@
 package org.jba;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.Set;
@@ -12,6 +13,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.FileUtils;
 import org.jba.model.Schema;
 import org.jba.model.TableKV;
 
@@ -21,22 +23,30 @@ import org.jba.model.TableKV;
  */
 public class MysqlDiff {
 
-    private static final String REP = "/home/julien/dev/mysqldiff/data/";
-    private static final String FIC_A = "2015_06_19_vet1_gmvet.mysql";
+    private static final String DEFAULT_FILE_A = "a.sql";
+    private static final String DEFAULT_FILE_B = "b.sql";
     private static final String DEFAULT_NAME_A = "the first database";
     private static final String DEFAULT_NAME_B = "the second database";
-    private static final String FIC_B = "2015_06_19_vet2_gmvet.mysql";
     private static final boolean NO_ARG = false;
     private static final boolean WITH_ARG = true;
-    // options
-    static boolean nc = false; // don't print the comments
+
+    static boolean noComment = false; // don't print the comments
+    static boolean printA = true;
+    static boolean printB = true;
     static String nameA = DEFAULT_NAME_A;
     static String nameB = DEFAULT_NAME_B;
+    static String fileNameA = DEFAULT_FILE_A;
+    static String fileNameB = DEFAULT_FILE_B;
 
     private static Schema buildSchema(String fileName) throws Exception {
+        try {
+            FileUtils.openInputStream(new File(fileName));
+        } catch (Exception e) {
+            System.err.println("Error opening file : '" + fileName + "'");
+            System.exit(1);
+        }
 
-        // TODO JBA traiter la présence des fichiers
-        BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(REP + fileName)));
+        BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
         Schema sch = new Schema();
         sch.fileName = fileName;
 
@@ -94,18 +104,17 @@ public class MysqlDiff {
         options.addOption("u", NO_ARG, "print usage");
         options.addOption("v", NO_ARG, "print the version");
         options.addOption("nc", NO_ARG, "don't print the comments");
-        options.addOption("fa", WITH_ARG, "file name to the A databasedump");
-        options.addOption("fb", WITH_ARG, "file name to the B database dump");
-        options.addOption("na", WITH_ARG, "name of the A database ");
-        options.addOption("nb", WITH_ARG, "name of the B database");
-        options.addOption("oa", WITH_ARG, "only print statement for the A database");
-        options.addOption("ob", WITH_ARG, "only print statement for the A database");
+        options.addOption("fA", WITH_ARG, "file name to the A databasedump");
+        options.addOption("fB", WITH_ARG, "file name to the B database dump");
+        options.addOption("nA", WITH_ARG, "name of the A database ");
+        options.addOption("nB", WITH_ARG, "name of the B database");
+        options.addOption("onlyA", NO_ARG, "only print statement for the A database");
+        options.addOption("onlyB", NO_ARG, "only print statement for the B database");
         
         CommandLineParser parser = new DefaultParser();
         try {
             // parse the command line arguments
             CommandLine line = parser.parse(options, args);
-            nc = line.hasOption("nc");
             if (line.hasOption("u")) {
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("MysqlDiff", options);
@@ -115,23 +124,24 @@ public class MysqlDiff {
                 System.out.println("MysqlDiff v 1.0");
                 System.exit(0);
             }
-            if (line.hasOption("na")) {
-                nameA = line.getOptionValue("na");
-            }
-            if (line.hasOption("nb")) {
-                nameB = line.getOptionValue("nb");
-            }
+            noComment = line.hasOption("nc");
+            nameA = line.getOptionValue("nA", DEFAULT_NAME_A);
+            nameB = line.getOptionValue("nB", DEFAULT_NAME_B);
+            fileNameA = line.getOptionValue("fA", DEFAULT_FILE_A);
+            fileNameB = line.getOptionValue("fB", DEFAULT_FILE_B);
+            printB = !line.hasOption("onlyA");
+            printA = !line.hasOption("onlyB");
+
         } catch (ParseException exp) {
-            // oops, something went wrong
             System.err.println("Parsing failed.  Reason: " + exp.getMessage());
+            System.exit(1);
         }
-        printComment("-- mysqlDiff start");
+        printComment("-- mysqlDiff start"); // TODO add date & time
 
-
-        Schema schemaA = buildSchema(FIC_A);
-        Schema schemaB = buildSchema(FIC_B);
-        printComment("-- " + nameA + " = " + FIC_A);
-        printComment("-- " + nameB + " = " + FIC_B);
+        Schema schemaA = buildSchema(fileNameA);
+        Schema schemaB = buildSchema(fileNameB);
+        printComment("-- " + nameA + " = " + fileNameA);
+        printComment("-- " + nameB + " = " + fileNameB);
 
         // the 2 schema are loaded, we can start the real work
         for (String tableName : getAllTables(schemaA, schemaB)) {
@@ -145,27 +155,30 @@ public class MysqlDiff {
             }
         }
 
-        printColDiff(schemaA, nameA, schemaB, nameB);
-        printColDiff(schemaB, nameB, schemaA, nameA);
+        printColDiff(schemaA, nameA, schemaB, nameB, printB);
+        printColDiff(schemaB, nameB, schemaA, nameA, printA);
 
-        printIndexDiff(schemaA, nameA, schemaB, nameB);
-        printIndexDiff(schemaB, nameB, schemaA, nameA);
+        printIndexDiff(schemaA, nameA, schemaB, nameB, printB);
+        printIndexDiff(schemaB, nameB, schemaA, nameA, printA);
 
-        printContrainteDiff(schemaA, nameA, schemaB, nameB);
-        printContrainteDiff(schemaB, nameB, schemaA, nameA);
+        printContrainteDiff(schemaA, nameA, schemaB, nameB, printB);
+        printContrainteDiff(schemaB, nameB, schemaA, nameA, printA);
 
         long fin = System.currentTimeMillis();
         printComment("-- mysqlDiff end : duration = " + displayDuration(deb, fin));
     }
 
     private static void printComment(String string) {
-        if (!nc) {
+        if (!noComment) {
             System.out.println(string);
         }
 
     }
 
-    private static void printColDiff(Schema firstSchema, String firstName, Schema secondSchema, String secondName) {
+    private static void printColDiff(Schema firstSchema, String firstName, Schema secondSchema, String secondName, boolean print) {
+        if (!print) {
+            return;
+        }
         printComment("-- Columns from " + firstName + " who don't exists in " + secondName + ".");
         for (String tableName : getAllTables(firstSchema, secondSchema)) {
             TableKV tableFirst = firstSchema.getTable(tableName);
@@ -185,7 +198,10 @@ public class MysqlDiff {
         }
     }
 
-    private static void printIndexDiff(Schema firstSchema, String firstName, Schema secondSchema, String secondName) {
+    private static void printIndexDiff(Schema firstSchema, String firstName, Schema secondSchema, String secondName, boolean print) {
+        if (!print) {
+            return;
+        }
         printComment("-- Indexs from " + firstName + " who don't exists in " + secondName + ".");
         for (String tableName : getAllTables(firstSchema, secondSchema)) {
             TableKV tableFirst = firstSchema.getTable(tableName);
@@ -205,7 +221,10 @@ public class MysqlDiff {
         }
     }
 
-    private static void printContrainteDiff(Schema firstSchema, String firstName, Schema secondSchema, String secondName) {
+    private static void printContrainteDiff(Schema firstSchema, String firstName, Schema secondSchema, String secondName, boolean print) {
+        if (!print) {
+            return;
+        }
         printComment("-- Foreign Key from " + firstName + " who don't exists in " + secondName + ".");
         for (String tableName : getAllConstraints(firstSchema, secondSchema)) {
             TableKV tableFirst = firstSchema.getContrainte(tableName);
