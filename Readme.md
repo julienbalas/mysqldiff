@@ -27,6 +27,6 @@ If you look at the code, it's very crud and at the same time quite elegant (i th
 
 ## RoadMap
 * add some command line parameters handling
-* add some output option (action of adding or removing to 
+* add some output option (choose SQL action to make the databases identical by adding or removing stuff) 
 * ?
 
