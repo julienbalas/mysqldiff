@@ -18,7 +18,7 @@ import org.jba.model.Schema;
 import org.jba.model.TableKV;
 
 /**
- * Compare 2 mysql dump file and generate the SQL code to make them structuraly identical.
+ * Compare 2 mysql dump file and generate the SQL code to make them structurally identical.
  * 
  */
 public class MysqlDiff {
