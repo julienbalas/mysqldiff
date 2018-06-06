@@ -42,6 +42,7 @@ public class MysqlDiff {
         try {
             FileUtils.openInputStream(new File(fileName));
         } catch (Exception e) {
+            System.err.println(e.getMessage());
             System.err.println("Error opening file : '" + fileName + "'");
             System.exit(1);
         }
