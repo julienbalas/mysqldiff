@@ -1,7 +1,7 @@
 # MySqlDiff
 
 #### The small application in this repository does :
-- read a mysql dump (with or without data).
+- read two mysql dump (with or without data).
 - print the differences.
 - propose SQL statements to make the 2 databases structurally identical.
 
