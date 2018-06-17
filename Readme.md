@@ -18,7 +18,9 @@
 1. git clone this repository
 1. mvn package
 1. cd target
-1. java -jar mysqldiff-1.0-SNAPSHOT.jar dump1.sql dump2.sql \[name1\] \[name2\]
+1. java -jar mysqldiff-1.0-SNAPSHOT.jar -u for Usage
+1. java -jar mysqldiff-1.0-SNAPSHOT.jar -fA dump1.sql -fB dump2.sql \[-nA name1\] \[-nB [name2\] 
+
 
 ## Known limitations
 * doesn't take care of triggers, stored procedure, etc. and i don't think i'm going to do it.
@@ -30,6 +32,6 @@
 
 
 ## RoadMap
-* add some command line parameters handling
-* add some output option (choose SQL action to make the databases identical by adding or removing stuff)
+* add some command line parameters handling [Done]
+* add some output option (choose SQL action to make the databases identical by adding or removing stuff) [Partially Done]
 * ?

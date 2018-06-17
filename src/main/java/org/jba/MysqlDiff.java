@@ -122,7 +122,7 @@ public class MysqlDiff {
 		try {
 			// parse the command line arguments
 			CommandLine line = parser.parse(options, args);
-			if (line.hasOption("u") || line.getArgList().isEmpty()) {
+			if (line.hasOption("u")) {
 				HelpFormatter formatter = new HelpFormatter();
 				formatter.printHelp("MysqlDiff", options);
 				System.exit(0);
